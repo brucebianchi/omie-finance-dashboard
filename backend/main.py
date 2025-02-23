@@ -24,7 +24,17 @@ async def proxy_omie(endpoint: str, request: Request):
     
     async with httpx.AsyncClient(timeout=10) as client:
         response = await client.post(omie_url, json=data, headers={"Content-Type": "application/json"})
-        return response.json()
+        
+        # Verifica se houve erro na resposta do Omie
+        response_json = response.json()
+        if "faultstring" in response_json or "faultcode" in response_json:
+            return {"error": "Erro na API do Omie", "details": response_json.get("faultstring", "Erro desconhecido")}, 400
+        
+        return response_json
+
+@app.get("/")
+def home():
+    return {"message": "Servidor FastAPI rodando!"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
