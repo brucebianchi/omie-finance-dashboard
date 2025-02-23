@@ -1,47 +1,59 @@
 import streamlit as st
 import requests
 from PIL import Image, ImageDraw, ImageFont
+import datetime
 import matplotlib.pyplot as plt
 
-# Configuração da página
-st.set_page_config(page_title="Omie Finance Dashboard", layout="wide")
+# 🔑 Credenciais da API Omie (coloque suas credenciais reais)
+APP_KEY = "2875058458272"
+APP_SECRET = "5d3c695e3b2ef6dc1de57be4d3e7744b"
 
+# 📅 Data de hoje
+data_hoje = datetime.datetime.today().strftime('%d/%m/%Y')
+
+# 🎨 Função para criar os cartões gráficos
+def criar_cartao(cor_fundo, titulo, valor, subtitulo=""):
+    width, height = 350, 130
+    card = Image.new("RGB", (width, height), cor_fundo)
+    draw = ImageDraw.Draw(card)
+
+    def load_font(size):
+        try:
+            return ImageFont.truetype("arial.ttf", size)
+        except:
+            return ImageFont.load_default()
+
+    font_title = load_font(24)
+    font_value = load_font(28)
+    font_subtitle = load_font(16)
+
+    padding = 15
+    draw.text((padding, 10), titulo, font=font_title, fill="white")
+    valor_formatado = f"R$ {valor:,.2f}"
+    draw.text((padding, 50), valor_formatado, font=font_value, fill="white")
+    draw.text((padding, 90), subtitulo, font=font_subtitle, fill="white")
+
+    return card
+
+# 🔗 Fazendo requisição para API Omie diretamente no Streamlit
 st.title("📊 Omie Finance Dashboard")
 st.write("Dados financeiros obtidos via API Omie.")
 
-# 🔗 Fazendo requisição ao backend FastAPI
-API_URL = "https://<SEU_BACKEND_URL>/api/dados_financeiros"  # Substitua pela URL do seu backend
-
 if st.button("🔄 Atualizar Dados"):
-    response = requests.get(API_URL).json()
+    # 🔗 Endpoint para obter resumo financeiro
+    url_resumo = "https://app.omie.com.br/api/v1/financas/resumo/"
+    payload_resumo = {
+        "call": "ObterResumoFinancas",
+        "app_key": APP_KEY,
+        "app_secret": APP_SECRET,
+        "param": [{"dDia": data_hoje, "lApenasResumo": True}]
+    }
+
+    response = requests.post(url_resumo, json=payload_resumo).json()
 
     saldo_total = response.get("contaCorrente", {}).get("vTotal", 0)
     contas_pagar_total = response.get("contaPagar", {}).get("vTotal", 0)
     contas_pagar_atraso = response.get("contaPagar", {}).get("vAtraso", 0)
-
-    # 🎨 Função para criar os cartões
-    def criar_cartao(cor_fundo, titulo, valor, subtitulo=""):
-        width, height = 350, 130
-        card = Image.new("RGB", (width, height), cor_fundo)
-        draw = ImageDraw.Draw(card)
-
-        def load_font(size):
-            try:
-                return ImageFont.truetype("arial.ttf", size)
-            except:
-                return ImageFont.load_default()
-
-        font_title = load_font(24)
-        font_value = load_font(28)
-        font_subtitle = load_font(16)
-
-        padding = 15
-        draw.text((padding, 10), titulo, font=font_title, fill="white")
-        valor_formatado = f"R$ {valor:,.2f}"
-        draw.text((padding, 50), valor_formatado, font=font_value, fill="white")
-        draw.text((padding, 90), subtitulo, font=font_subtitle, fill="white")
-
-        return card
 
     # Criando os cartões
     cartao_saldo = criar_cartao("#E87432", "Saldo em Contas", saldo_total)
