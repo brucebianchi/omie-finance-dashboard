@@ -44,11 +44,12 @@ st.title("📊 Omie Finance Dashboard")
 st.write("Dados financeiros obtidos via API Omie.")
 
 if st.button("🔄 Atualizar Dados"):
-    # 📌 Endpoint correto para buscar categorias
+    # 📌 Endpoints da API Omie
     url_resumo = "https://app.omie.com.br/api/v1/financas/resumo/"
     url_pagar = "https://app.omie.com.br/api/v1/financas/pesquisartitulos/"
     url_receber = "https://app.omie.com.br/api/v1/financas/pesquisartitulos/"
 
+    # 📌 Payloads de requisição
     payload_resumo = {
         "call": "ObterResumoFinancas",
         "app_key": APP_KEY,
@@ -80,6 +81,7 @@ if st.button("🔄 Atualizar Dados"):
     contas_pagar_total = response_resumo.get("contaPagar", {}).get("vTotal", 0)
     contas_pagar_atraso = response_resumo.get("contaPagar", {}).get("vAtraso", 0)
     contas_receber_total = response_resumo.get("contaReceber", {}).get("vTotal", 0)
+    contas_receber_atraso = response_resumo.get("contaReceber", {}).get("vAtraso", 0)
 
     # 📌 Extração de categorias corrigida
     categorias_pagar = response_pagar.get("ListaEmEberto", [])
@@ -127,6 +129,7 @@ if st.button("🔄 Atualizar Dados"):
             <div class="card card-blue">
                 <h3>📈 RECEBER HOJE</h3>
                 <p style="font-size: 28px;"><b>R$ {contas_receber_total:,.2f}</b></p>
+                <p style="font-size: 18px;">Em atraso: R$ {contas_receber_atraso:,.2f}</p>
                 <div class="categories">{categorias_receber_texto}</div>
             </div>
         </div>
