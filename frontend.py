@@ -44,7 +44,11 @@ st.title("📊 Omie Finance Dashboard")
 st.write("Dados financeiros obtidos via API Omie.")
 
 if st.button("🔄 Atualizar Dados"):
+    # 📌 Endpoint correto para buscar categorias
     url_resumo = "https://app.omie.com.br/api/v1/financas/resumo/"
+    url_pagar = "https://app.omie.com.br/api/v1/financas/pesquisartitulos/"
+    url_receber = "https://app.omie.com.br/api/v1/financas/pesquisartitulos/"
+
     payload_resumo = {
         "call": "ObterResumoFinancas",
         "app_key": APP_KEY,
@@ -52,24 +56,42 @@ if st.button("🔄 Atualizar Dados"):
         "param": [{"dDia": data_hoje, "lApenasResumo": True}]
     }
 
-    response = requests.post(url_resumo, json=payload_resumo).json()
+    payload_pagar = {
+        "call": "ObterListaEmAberto",
+        "app_key": APP_KEY,
+        "app_secret": APP_SECRET,
+        "param": [{"dDia": data_hoje, "cTipo": "P", "nRegPorPagina": 50, "nPagina": 1}]
+    }
 
-    saldo_total = response.get("contaCorrente", {}).get("vTotal", 0)
-    contas_pagar_total = response.get("contaPagar", {}).get("vTotal", 0)
-    contas_pagar_atraso = response.get("contaPagar", {}).get("vAtraso", 0)
-    contas_receber_total = response.get("contaReceber", {}).get("vTotal", 0)
+    payload_receber = {
+        "call": "ObterListaEmAberto",
+        "app_key": APP_KEY,
+        "app_secret": APP_SECRET,
+        "param": [{"dDia": data_hoje, "cTipo": "R", "nRegPorPagina": 50, "nPagina": 1}]
+    }
 
-    # 🚀 Garantindo que as categorias sempre sejam listas válidas
-    categorias_pagar = response.get("contaPagarCategoria", []) or []
-    categorias_receber = response.get("contaReceberCategoria", []) or []
+    # 🔗 Chamadas para API da Omie
+    response_resumo = requests.post(url_resumo, json=payload_resumo).json()
+    response_pagar = requests.post(url_pagar, json=payload_pagar).json()
+    response_receber = requests.post(url_receber, json=payload_receber).json()
 
-    # Formatar categorias
+    # 📌 Extraindo informações financeiras
+    saldo_total = response_resumo.get("contaCorrente", {}).get("vTotal", 0)
+    contas_pagar_total = response_resumo.get("contaPagar", {}).get("vTotal", 0)
+    contas_pagar_atraso = response_resumo.get("contaPagar", {}).get("vAtraso", 0)
+    contas_receber_total = response_resumo.get("contaReceber", {}).get("vTotal", 0)
+
+    # 📌 Extração de categorias corrigida
+    categorias_pagar = response_pagar.get("ListaEmEberto", [])
+    categorias_receber = response_receber.get("ListaEmEberto", [])
+
+    # 📌 Formatando categorias corretamente
     categorias_formatadas_pagar = [
-        f"{cat.get('vTotal', 0):,.2f} {cat.get('cDescCateg', 'Sem descrição')}" for cat in categorias_pagar[:5]
+        f"{cat.get('vDoc', 0):,.2f} {cat.get('cDescCateg', 'Sem descrição')}" for cat in categorias_pagar[:5]
     ] if categorias_pagar else ["Nenhuma categoria disponível"]
 
     categorias_formatadas_receber = [
-        f"{cat.get('vTotal', 0):,.2f} {cat.get('cDescCateg', 'Sem descrição')}" for cat in categorias_receber[:5]
+        f"{cat.get('vDoc', 0):,.2f} {cat.get('cDescCateg', 'Sem descrição')}" for cat in categorias_receber[:5]
     ] if categorias_receber else ["Nenhuma categoria disponível"]
 
     # 📌 Melhor organização dos cartões
