@@ -59,16 +59,18 @@ if st.button("🔄 Atualizar Dados"):
     contas_pagar_atraso = response.get("contaPagar", {}).get("vAtraso", 0)
     contas_receber_total = response.get("contaReceber", {}).get("vTotal", 0)
 
-    categorias_pagar = response.get("contaPagarCategoria", [])
-    categorias_receber = response.get("contaReceberCategoria", [])
+    # 🚀 Garantindo que as categorias sempre sejam listas válidas
+    categorias_pagar = response.get("contaPagarCategoria", []) or []
+    categorias_receber = response.get("contaReceberCategoria", []) or []
 
     # Formatar categorias
     categorias_formatadas_pagar = [
         f"{cat.get('vTotal', 0):,.2f} {cat.get('cDescCateg', 'Sem descrição')}" for cat in categorias_pagar[:5]
-    ]
+    ] if categorias_pagar else ["Nenhuma categoria disponível"]
+
     categorias_formatadas_receber = [
         f"{cat.get('vTotal', 0):,.2f} {cat.get('cDescCateg', 'Sem descrição')}" for cat in categorias_receber[:5]
-    ]
+    ] if categorias_receber else ["Nenhuma categoria disponível"]
 
     # 📌 Melhor organização dos cartões
     st.markdown('<div class="container">', unsafe_allow_html=True)
